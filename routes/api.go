@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"go-simpoku/src/controller"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,7 @@ func InitRoutes() *gin.Engine {
 				"code": "OK",
 			})
 		})
+		api.POST("/user/sign-up", controller.SignUp)
 	}
 	return route
 }
