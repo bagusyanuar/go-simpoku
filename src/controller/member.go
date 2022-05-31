@@ -18,7 +18,7 @@ func SetMemberProfile(c *gin.Context) {
 	var request requestBody
 	c.BindJSON(&request)
 
-	var member model.BaseMember
+	var member model.Member
 	if err := database.DB.Debug().Where("id = ?", request.ID).First(&member).Error; err != nil {
 		c.JSON(500, lib.Response{
 			Code:    500,
@@ -28,7 +28,7 @@ func SetMemberProfile(c *gin.Context) {
 		return
 	}
 
-	database.DB.Debug().Model(&member).Association("Specialist").Append([]model.BaseSpecialist{
+	database.DB.Debug().Model(&member).Omit("BaseMember").Association("Specialist").Append([]model.BaseSpecialist{
 		{ID: uint(request.Specialist[0])},
 		{ID: uint(request.Specialist[1])},
 	})
