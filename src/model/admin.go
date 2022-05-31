@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Admin struct {
+type BaseAdmin struct {
 	ID        uuid.UUID `gorm:"type:char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;primaryKey;" json:"id"`
 	UserID    uuid.UUID `gorm:"column:user_id;type:char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;not null" json:"user_id"`
 	Name      string    `gorm:"type:varchar(255);not null;" json:"name"`
@@ -17,13 +17,18 @@ type Admin struct {
 	UpdatedAt time.Time `gorm:"column:updated_at;not null" json:"updated_at"`
 }
 
-func (admin *Admin) BeforeCreate(tx *gorm.DB) (err error) {
+type Admin struct {
+	BaseAdmin
+	User BaseUser `gorm:"foreignKey:UserID"`
+}
+
+func (admin *BaseAdmin) BeforeCreate(tx *gorm.DB) (err error) {
 	admin.ID = uuid.New()
 	admin.CreatedAt = time.Now()
 	admin.UpdatedAt = time.Now()
 	return
 }
 
-func (Admin) TableName() string {
+func (BaseAdmin) TableName() string {
 	return "admins"
 }

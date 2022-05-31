@@ -3,10 +3,8 @@ package database
 import "go-simpoku/src/model"
 
 func Migrate() {
-	DB.AutoMigrate(&model.User{})
+	DB.AutoMigrate(&model.BaseUser{})
 	DB.AutoMigrate(&model.Admin{})
 	DB.AutoMigrate(&model.Member{})
-
-	DB.AutoMigrate(&MemberToUser{})
-	DB.AutoMigrate(&AdminToUser{})
+	DB.AutoMigrate(&model.Specialist{})
 }

@@ -14,8 +14,8 @@ import (
 type Auth struct{}
 
 type userWithMember struct {
-	model.User
-	Member model.Member `gorm:"foreignKey:UserID" json:"member"`
+	model.BaseUser
+	Member model.BaseMember `gorm:"foreignKey:UserID" json:"member"`
 }
 
 func SignUp(c *gin.Context) {
@@ -43,38 +43,38 @@ func SignUp(c *gin.Context) {
 		}
 	}()
 
-	user := model.User{
+	user := model.BaseUser{
 		Username: username,
 		Email:    email,
 		Password: &password,
 		Roles:    roles,
 	}
 
-	member := model.Member{
+	member := model.BaseMember{
 		Name: name,
 	}
 
 	userMember := userWithMember{
-		User:   user,
-		Member: member,
+		BaseUser: user,
+		Member:   member,
 	}
 	if err := tx.Create(&userMember).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, lib.Response{
 			Code:    http.StatusInternalServerError,
 			Data:    nil,
-			Message: "Error While Creating Account "+err.Error(),
+			Message: "Error While Creating Account " + err.Error(),
 		})
 		return
 	}
 
 	jwt := lib.JWT{}
 	claim := lib.JWTClaims{
-		Unique: userMember.ID,
+		Unique:     userMember.ID,
 		Identifier: userMember.Member.ID,
-		Username: userMember.Username,
-		Email: userMember.Email,
-		Role: "member",
+		Username:   userMember.Username,
+		Email:      userMember.Email,
+		Role:       "member",
 	}
 	accessToken, errorTokenize := jwt.GenerateToked(claim)
 	if errorTokenize != nil {

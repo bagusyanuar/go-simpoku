@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func InitRoutes() *gin.Engine {
 	gin.SetMode(gin.DebugMode)
 	route := gin.Default()
@@ -21,6 +20,8 @@ func InitRoutes() *gin.Engine {
 			})
 		})
 		api.POST("/user/sign-up", controller.SignUp)
+		api.GET("/specialist", controller.Specialist)
+		api.POST("/specialist", controller.Specialist)
 	}
 	return route
 }
