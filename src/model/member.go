@@ -19,8 +19,8 @@ type BaseMember struct {
 
 type Member struct {
 	BaseMember
-	User       BaseUser     `gorm:"foreignKey:UserID"`
-	Specialist []Specialist `gorm:"many2many:member_specialist;"`
+	User       BaseUser         `gorm:"foreignKey:UserID"`
+	Specialist []BaseSpecialist `gorm:"many2many:member_specialist;"`
 }
 
 func (member *BaseMember) BeforeCreate(tx *gorm.DB) (err error) {

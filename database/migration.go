@@ -6,5 +6,5 @@ func Migrate() {
 	DB.AutoMigrate(&model.BaseUser{})
 	DB.AutoMigrate(&model.Admin{})
 	DB.AutoMigrate(&model.Member{})
-	DB.AutoMigrate(&model.Specialist{})
+	DB.AutoMigrate(&model.BaseSpecialist{})
 }

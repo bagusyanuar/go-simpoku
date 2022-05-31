@@ -7,15 +7,15 @@ import (
 
 type Specialist struct{}
 
-func (Specialist) FindAll() (result *[]model.Specialist, err error) {
-	var specialists *[]model.Specialist
+func (Specialist) FindAll() (result *[]model.BaseSpecialist, err error) {
+	var specialists *[]model.BaseSpecialist
 	if err = database.DB.Debug().Find(&specialists).Error; err != nil {
 		return nil, err
 	}
 	return specialists, nil
 }
 
-func (Specialist) Create(data *model.Specialist) (result *model.Specialist, err error) {
+func (Specialist) Create(data *model.BaseSpecialist) (result *model.BaseSpecialist, err error) {
 	if err = database.DB.Debug().Create(&data).Error; err != nil {
 		return nil, err
 	}

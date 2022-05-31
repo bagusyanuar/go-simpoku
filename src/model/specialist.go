@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Specialist struct {
+type BaseSpecialist struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
 	Slug      string    `gorm:"type:varchar(255);not null" json:"slug"`
@@ -14,12 +14,12 @@ type Specialist struct {
 	UpdatedAt time.Time `gorm:"column:updated_at;not null" json:"updated_at"`
 }
 
-func (specialist *Specialist) BeforeCreate(tx *gorm.DB) (err error) {
+func (specialist *BaseSpecialist) BeforeCreate(tx *gorm.DB) (err error) {
 	specialist.CreatedAt = time.Now()
 	specialist.UpdatedAt = time.Now()
 	return
 }
 
-func (Specialist) TableName() string {
+func (BaseSpecialist) TableName() string {
 	return "specialists"
 }
