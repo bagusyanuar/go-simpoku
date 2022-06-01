@@ -15,8 +15,8 @@ type Member struct {
 	Avatar     string       `gorm:"type:text;not null;" json:"avatar"`
 	CreatedAt  time.Time    `gorm:"column:created_at;not null" json:"created_at"`
 	UpdatedAt  time.Time    `gorm:"column:updated_at;not null" json:"updated_at"`
-	User       User         `gorm:"foreignKey:UserID"`
-	Specialist []Specialist `gorm:"many2many:member_specialist;"`
+	User       User         `gorm:"foreignKey:UserID" json:"user"`
+	Specialist []Specialist `gorm:"many2many:member_specialist;" json:"specialist"`
 }
 
 // type Member struct {

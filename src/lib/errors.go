@@ -1,6 +1,11 @@
 package lib
 
-import "errors"
+import (
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 var (
 	ErrBearerType      = errors.New("invalid bearer type")
@@ -10,3 +15,12 @@ var (
 	ErrNoAuthorization = errors.New("unauthorized")
 	ErrInvalidPassword = errors.New("password did not match")
 )
+
+func Unauthorized(c *gin.Context) {
+	c.AbortWithStatusJSON(http.StatusUnauthorized, Response{
+		Code:    http.StatusUnauthorized,
+		Data:    nil,
+		Message: "Unautthorized : failed to get signed user",
+	})
+	return
+}

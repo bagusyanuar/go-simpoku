@@ -4,9 +4,10 @@ import (
 	"go-simpoku/database"
 	"go-simpoku/src/lib"
 	"go-simpoku/src/model"
+	"go-simpoku/src/repository"
 	"net/http"
+	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -15,59 +16,87 @@ type requestBody struct {
 	Specialist []uint `json:"specialist"`
 }
 
-func MemberProfile(c *gin.Context) {
-	user := c.MustGet("user").(jwt.MapClaims)
-	var member model.Member
-	user_id, e := uuid.Parse(user["identifier"].(string))
+type response struct {
+	ID        uuid.UUID  `json:"id"`
+	UserID    uuid.UUID  `json:"user_id"`
+	Name      string     `json:"name"`
+	Phone     string     `json:"phone"`
+	Avatar    string     `json:"avatar"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	User      model.User `json:"user"`
+}
+
+var member repository.Member
+
+func Member(c *gin.Context) {
+	_, e := lib.GetSignedUser(c)
 	if e != nil {
-		c.JSON(http.StatusUnauthorized, lib.Response{
-			Code:    http.StatusUnauthorized,
-			Data:    nil,
-			Message: "Internal Server Error. Failed To Get User",
-		})
-		return
+		lib.Unauthorized(c)
 	}
-	if err := database.DB.Debug().Preload("Specialist").Preload("User").Where("id = ?", user_id).First(&member).Error; err != nil {
-		c.JSON(500, lib.Response{
+	data, err := member.FindAll()
+	if err != nil {
+		c.AbortWithStatusJSON(500, lib.Response{
 			Code:    500,
 			Data:    nil,
 			Message: "failed " + err.Error(),
 		})
 		return
 	}
+	c.JSON(http.StatusOK, lib.Response{
+		Code:    200,
+		Data:    data,
+		Message: "success",
+	})
+}
 
-	if c.Request.Method == "POST" {
-		var request requestBody
-		c.BindJSON(&request)
-
-		specialists := []model.Specialist{}
-
-		for _, v := range request.Specialist {
-			specialists = append(specialists, model.Specialist{
-				ID: v,
-			})
-		}
-		err := database.DB.Debug().Model(&member).Association("Specialist").Append(specialists)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, lib.Response{
-				Code:    http.StatusInternalServerError,
-				Data:    nil,
-				Message: "failed to patch specialist " + err.Error(),
-			})
-			return
-		}
-
-		c.JSON(http.StatusOK, lib.Response{
-			Code:    200,
+func MemberProfile(c *gin.Context) {
+	user_id, e := lib.GetSignedUser(c)
+	if e != nil {
+		lib.Unauthorized(c)
+	}
+	data, err := member.Find(user_id)
+	if err != nil {
+		c.AbortWithStatusJSON(500, lib.Response{
+			Code:    500,
 			Data:    nil,
-			Message: "success",
+			Message: "failed " + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, lib.Response{
 		Code:    200,
-		Data:    &member,
+		Data:    data,
+		Message: "success",
+	})
+}
+
+func SetSpecialist(c *gin.Context) {
+	var member model.Member
+	var request requestBody
+	c.BindJSON(&request)
+
+	specialists := []model.Specialist{}
+
+	for _, v := range request.Specialist {
+		specialists = append(specialists, model.Specialist{
+			ID: v,
+		})
+	}
+	err := database.DB.Debug().Model(&member).Association("Specialist").Append(specialists)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, lib.Response{
+			Code:    http.StatusInternalServerError,
+			Data:    nil,
+			Message: "failed to patch specialist " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, lib.Response{
+		Code:    200,
+		Data:    nil,
 		Message: "success",
 	})
 }
