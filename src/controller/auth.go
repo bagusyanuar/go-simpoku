@@ -13,11 +13,6 @@ import (
 
 type Auth struct{}
 
-type userWithMember struct {
-	model.BaseUser
-	Member model.BaseMember `gorm:"foreignKey:UserID" json:"member"`
-}
-
 func SignUp(c *gin.Context) {
 	email := c.PostForm("email")
 	username := c.PostForm("username")
@@ -43,22 +38,19 @@ func SignUp(c *gin.Context) {
 		}
 	}()
 
-	user := model.BaseUser{
+	user := model.User{
 		Username: username,
 		Email:    email,
 		Password: &password,
 		Roles:    roles,
 	}
 
-	member := model.BaseMember{
+	member := model.Member{
 		Name: name,
+		User: user,
 	}
 
-	userMember := userWithMember{
-		BaseUser: user,
-		Member:   member,
-	}
-	if err := tx.Create(&userMember).Error; err != nil {
+	if err := tx.Debug().Create(&member).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, lib.Response{
 			Code:    http.StatusInternalServerError,
@@ -70,10 +62,10 @@ func SignUp(c *gin.Context) {
 
 	jwt := lib.JWT{}
 	claim := lib.JWTClaims{
-		Unique:     userMember.ID,
-		Identifier: userMember.Member.ID,
-		Username:   userMember.Username,
-		Email:      userMember.Email,
+		Unique:     member.UserID,
+		Identifier: member.ID,
+		Username:   member.User.Username,
+		Email:      member.User.Email,
 		Role:       "member",
 	}
 	accessToken, errorTokenize := jwt.GenerateToked(claim)

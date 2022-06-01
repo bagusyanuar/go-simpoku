@@ -7,6 +7,7 @@ import (
 
 var JWTSigninMethod = jwt.SigningMethodHS256
 var JWTSignatureKey string = "ONLYGODKNOWS"
+
 type JWT struct{}
 
 type JWTClaims struct {
@@ -23,10 +24,10 @@ func (j JWT) GenerateToked(c JWTClaims) (string, error) {
 		StandardClaims: jwt.StandardClaims{
 			Issuer: "simpoku-app",
 		},
-		Unique: c.Unique,
-		Username: c.Username,
-		Email: c.Email,
-		Role: c.Role,
+		Unique:     c.Unique,
+		Username:   c.Username,
+		Email:      c.Email,
+		Role:       c.Role,
 		Identifier: c.Identifier,
 	}
 
@@ -37,4 +38,36 @@ func (j JWT) GenerateToked(c JWTClaims) (string, error) {
 		return "", err
 	}
 	return signedToken, nil
+}
+
+func (JWT) Claim(auth string) (interface{}, error) {
+	if auth == "" {
+		return nil, ErrNoAuthorization
+	}
+
+	bearer := string(auth[0:7])
+	token := string(auth[7:])
+
+	if bearer != "Bearer " {
+		return nil, ErrBearerType
+	}
+
+	v, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		if method, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, ErrSignInMethod
+		} else if method != JWTSigninMethod {
+			return nil, ErrSignInMethod
+		}
+		return []byte(JWTSignatureKey), nil
+	})
+
+	if err != nil {
+		return nil, ErrJWTParse
+	}
+
+	claim, ok := v.Claims.(jwt.MapClaims)
+	if !ok || !v.Valid {
+		return nil, ErrJWTClaims
+	}
+	return claim, nil
 }
