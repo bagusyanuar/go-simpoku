@@ -25,7 +25,7 @@ func (user *BaseUser) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-func (BaseUser) TableName() string {
+func (User) TableName() string {
 	return "users"
 }
 
