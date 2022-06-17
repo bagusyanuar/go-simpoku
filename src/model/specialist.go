@@ -23,3 +23,9 @@ func (specialist *BaseSpecialist) BeforeCreate(tx *gorm.DB) (err error) {
 func (BaseSpecialist) TableName() string {
 	return "specialists"
 }
+
+
+type Specialist struct {
+	BaseSpecialist
+	Member []Member `gorm:"many2many:member_specialist;"`
+}

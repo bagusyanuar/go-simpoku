@@ -28,3 +28,9 @@ func (user *BaseUser) BeforeCreate(tx *gorm.DB) (err error) {
 func (BaseUser) TableName() string {
 	return "users"
 }
+
+type User struct {
+	BaseUser
+	Member *BaseMember `gorm:"foreignKey:UserID"`
+}
+

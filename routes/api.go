@@ -23,6 +23,7 @@ func InitRoutes() *gin.Engine {
 		api.GET("/specialist", controller.Specialist)
 		api.POST("/specialist", controller.Specialist)
 		api.POST("/user/profile", controller.SetMemberProfile)
+		api.GET("/user/profile", controller.UserGet)
 	}
 	return route
 }

@@ -17,12 +17,6 @@ type BaseMember struct {
 	UpdatedAt time.Time `gorm:"column:updated_at;not null" json:"updated_at"`
 }
 
-type Member struct {
-	BaseMember
-	User       BaseUser         `gorm:"foreignKey:UserID"`
-	Specialist []BaseSpecialist `gorm:"many2many:member_specialist;"`
-}
-
 func (member *BaseMember) BeforeCreate(tx *gorm.DB) (err error) {
 	member.ID = uuid.New()
 	member.CreatedAt = time.Now()
@@ -33,3 +27,11 @@ func (member *BaseMember) BeforeCreate(tx *gorm.DB) (err error) {
 func (BaseMember) TableName() string {
 	return "members"
 }
+
+type Member struct {
+	BaseMember
+	User       BaseUser         `gorm:"foreignKey:UserID"`
+	Specialist []Specialist `gorm:"many2many:member_specialist;"`
+}
+
+
