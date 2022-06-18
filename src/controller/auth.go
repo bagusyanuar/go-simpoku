@@ -14,7 +14,7 @@ import (
 
 type Auth struct{}
 
-type memberUser struct{
+type memberUser struct {
 	model.Member
 	User model.User
 }
@@ -74,7 +74,7 @@ func SignUp(c *gin.Context) {
 		Identifier: member.ID,
 		// Username:   member.User.Username,
 		// Email:      member.User.Email,
-		Role:       "member",
+		Role: "member",
 	}
 	accessToken, errorTokenize := jwt.GenerateToked(claim)
 	if errorTokenize != nil {

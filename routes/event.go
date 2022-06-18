@@ -9,6 +9,7 @@ import (
 func EventRoutes(route *gin.RouterGroup) {
 	group := route.Group("/event")
 	{
-		group.POST("/", controller.CreateEvent)
+		group.GET("/", controller.IndexEvent)
+		group.POST("/", controller.IndexEvent)
 	}
 }

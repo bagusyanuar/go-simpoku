@@ -47,3 +47,11 @@ func ErrorSignIn(err error) Response {
 		}
 	}
 }
+
+func AbortInternalServerError(c *gin.Context, err error) {
+	c.AbortWithStatusJSON(http.StatusInternalServerError, Response{
+		Code:    http.StatusInternalServerError,
+		Data:    nil,
+		Message: "internal server error : " + err.Error(),
+	})
+}
