@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Response struct {
@@ -30,4 +31,9 @@ func MakeSlug(text string) string {
 func GetSignedUser(c *gin.Context) (uuid.UUID, error) {
 	user := c.MustGet("user").(jwt.MapClaims)
 	return uuid.Parse(user["identifier"].(string))
+}
+
+func IsPasswordValid(plainPassword string, hashedPassword string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
+	return err == nil
 }

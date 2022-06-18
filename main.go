@@ -32,6 +32,9 @@ func main() {
 		database.Migrate()
 		fmt.Printf("Successfull Migrate")
 		return
+	} else if command == "seed" {
+		database.Seed()
+		return
 	}
 	server := routes.InitRoutes()
 	port := fmt.Sprintf(":%s", appPort)

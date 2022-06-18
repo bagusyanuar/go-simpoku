@@ -12,8 +12,14 @@ type Member struct {
 	TX *gorm.DB
 }
 
-func (Member) FindAll() (results []model.Member, err error) {
-	var member []model.Member
+type member struct {
+	model.Member
+	User       model.User         `gorm:"foreignKey:UserID" json:"user"`
+	Specialist []model.Specialist `gorm:"many2many:member_specialist;" json:"specialists"`
+}
+
+func (Member) FindAll() (results []member, err error) {
+	var member []member
 	if err = database.DB.Debug().
 		Preload("Specialist").
 		Preload("User").
@@ -23,13 +29,14 @@ func (Member) FindAll() (results []model.Member, err error) {
 	}
 	return member, nil
 }
-func (Member) Find(user_id uuid.UUID) (result *model.Member, err error) {
-	var member model.Member
+
+func (Member) Find(user_id uuid.UUID) (result *member, err error) {
+	var data member
 	if err = database.DB.Debug().
 		Preload("Specialist").
 		Preload("User").
-		Where("id = ?", user_id).First(&member).Error; err != nil {
+		Where("id = ?", user_id).First(&data).Error; err != nil {
 		return nil, err
 	}
-	return &member, nil
+	return &data, nil
 }

@@ -5,6 +5,7 @@ import (
 	"go-simpoku/database"
 	"go-simpoku/src/lib"
 	"go-simpoku/src/model"
+	"go-simpoku/src/repository"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,11 @@ import (
 )
 
 type Auth struct{}
+
+type memberUser struct{
+	model.Member
+	User model.User
+}
 
 func SignUp(c *gin.Context) {
 	email := c.PostForm("email")
@@ -38,15 +44,15 @@ func SignUp(c *gin.Context) {
 		}
 	}()
 
-	user := model.BaseUser{
+	user := model.User{
 		Username: username,
 		Email:    email,
 		Password: &password,
 		Roles:    roles,
 	}
 
-	member := model.Member{
-		BaseMember: model.BaseMember{
+	member := memberUser{
+		Member: model.Member{
 			Name: name,
 		},
 		User: user,
@@ -66,8 +72,8 @@ func SignUp(c *gin.Context) {
 	claim := lib.JWTClaims{
 		Unique:     member.UserID,
 		Identifier: member.ID,
-		Username:   member.User.Username,
-		Email:      member.User.Email,
+		// Username:   member.User.Username,
+		// Email:      member.User.Email,
 		Role:       "member",
 	}
 	accessToken, errorTokenize := jwt.GenerateToked(claim)
@@ -88,4 +94,46 @@ func SignUp(c *gin.Context) {
 		},
 		Message: "Success Sign Up",
 	})
+}
+
+func AdminSignIn(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+	auth := repository.AdminAuth{
+		User: model.User{
+			Username: username,
+			Password: &password,
+		},
+	}
+	user, err := auth.SignIn()
+	if err != nil {
+		errorResponse := lib.ErrorSignIn(err)
+		c.AbortWithStatusJSON(errorResponse.Code, errorResponse)
+		return
+	}
+	jwt := lib.JWT{}
+	claim := lib.JWTClaims{
+		Unique:     user.User.ID,
+		Identifier: user.Admin.ID,
+		Username:   user.User.Username,
+		Email:      user.User.Email,
+		Role:       "admin",
+	}
+	accessToken, errorTokenize := jwt.GenerateToked(claim)
+	if errorTokenize != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"data":    nil,
+			"message": "Error While Generate Token " + errorTokenize.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, lib.Response{
+		Code: http.StatusOK,
+		Data: map[string]interface{}{
+			"accessToken": accessToken,
+		},
+		Message: "success sign in",
+	})
+
 }

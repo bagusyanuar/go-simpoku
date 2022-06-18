@@ -18,11 +18,6 @@ type Admin struct {
 	User      User      `gorm:"foreignKey:UserID"`
 }
 
-// type Admin struct {
-// 	BaseAdmin
-// 	User BaseUser `gorm:"foreignKey:UserID"`
-// }
-
 func (admin *Admin) BeforeCreate(tx *gorm.DB) (err error) {
 	admin.ID = uuid.New()
 	admin.CreatedAt = time.Now()

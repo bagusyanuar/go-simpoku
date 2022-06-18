@@ -24,6 +24,9 @@ func InitRoutes() *gin.Engine {
 		api.POST("/specialist", controller.Specialist)
 		// api.POST("/user/profile", controller.SetMemberProfile)
 		api.GET("/user/profile", controller.UserGet)
+		AuthRoutes(api)
+		MemberRoutes(api)
+		EventRoutes(api)
 	}
 	return route
 }

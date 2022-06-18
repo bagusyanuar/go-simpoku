@@ -16,7 +16,7 @@ func Specialist(c *gin.Context) {
 	if c.Request.Method == "POST" {
 		name := c.PostForm("name")
 
-		formData := model.BaseSpecialist{
+		formData := model.Specialist{
 			Name: strings.Title(name),
 			Slug: lib.MakeSlug(name),
 		}

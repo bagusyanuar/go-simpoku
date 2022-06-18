@@ -76,10 +76,10 @@ func SetSpecialist(c *gin.Context) {
 	var request requestBody
 	c.BindJSON(&request)
 
-	specialists := []model.BaseSpecialist{}
+	specialists := []model.Specialist{}
 
 	for _, v := range request.Specialist {
-		specialists = append(specialists, model.BaseSpecialist{
+		specialists = append(specialists, model.Specialist{
 			ID: v,
 		})
 	}
