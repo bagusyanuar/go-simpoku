@@ -19,14 +19,37 @@ func InitRoutes() *gin.Engine {
 				"code": "OK",
 			})
 		})
-		api.POST("/user/sign-up", controller.SignUp)
-		api.GET("/specialist", controller.Specialist)
-		api.POST("/specialist", controller.Specialist)
+		// api.POST("/user/sign-up", controller.SignUp)
+		// api.GET("/specialist", controller.Specialist)
+		// api.POST("/specialist", controller.Specialist)
 		// api.POST("/user/profile", controller.SetMemberProfile)
-		api.GET("/user/profile", controller.UserGet)
-		AuthRoutes(api)
-		MemberRoutes(api)
-		EventRoutes(api)
+		// api.GET("/user/profile", controller.UserGet)
+		// AuthRoutes(api)
+		// MemberRoutes(api)
+		
+		routeAuth := api.Group("auth")
+		{
+			auth := controller.Auth{}
+			routeAuth.POST("/sign-up", auth.SignIn)
+			routeAuth.POST("/sign-in", auth.SignIn)
+			// adminAuth := routeAuth.Group("admin")
+			// {
+			// 	adminAuth.POST("/sign-in", auth.AdminSignIn)
+			// }
+
+			// memberAuth := routeAuth.Group("member")
+			// {
+			// 	memberAuth.POST("/sign-up", auth.MemberSignUp)
+			// 	memberAuth.POST("/sign-in", auth.SignIn)
+			// }
+		}
+
+		routeEvent := api.Group("event")
+		{
+			event := controller.Event{}
+			routeEvent.GET("/", event.Index)
+			routeEvent.POST("/", event.Index)
+		}
 	}
 	return route
 }

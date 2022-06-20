@@ -1,6 +1,9 @@
 package lib
 
 import (
+	"mime/multipart"
+	"net/http"
+	"os"
 	"regexp"
 	"strings"
 
@@ -36,4 +39,23 @@ func GetSignedUser(c *gin.Context) (uuid.UUID, error) {
 func IsPasswordValid(plainPassword string, hashedPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 	return err == nil
+}
+
+func UploadFile(c *gin.Context, file *multipart.FileHeader, destination string) {
+	if errUpload := c.SaveUploadedFile(file, destination); errUpload != nil {
+		if _, err := os.Stat("/assets/images"); err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, Response{
+				Code:    http.StatusInternalServerError,
+				Data:    nil,
+				Message: "path not exist " + err.Error(),
+			})
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, Response{
+			Code:    http.StatusInternalServerError,
+			Data:    nil,
+			Message: "Internal Server Error. Failed while upload icon" + errUpload.Error(),
+		})
+		return
+	}
 }

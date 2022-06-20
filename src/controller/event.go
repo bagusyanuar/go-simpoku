@@ -5,6 +5,7 @@ import (
 	"go-simpoku/src/model"
 	"go-simpoku/src/repository"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,36 +17,59 @@ import (
 
 type Event struct{}
 
-func IndexEvent(c *gin.Context) {
+func (Event) Index(c *gin.Context) {
 
 	if c.Request.Method == "POST" {
 
-		file, _ := c.FormFile("file")
+		name := c.PostForm("name")
+		description := c.PostForm("description")
+		start := c.PostForm("start")
+		finish := c.PostForm("finish")
+		location := c.PostForm("location")
+
+		startValue, _ := time.Parse("2006-01-02", start)
+		finishValue, _ := time.Parse("2006-01-02", finish)
+
+		file, _ := c.FormFile("image")
 		if file == nil {
-			c.JSON(http.StatusOK, lib.Response{
-				Code:    http.StatusOK,
+			c.AbortWithStatusJSON(http.StatusBadRequest, lib.Response{
+				Code:    http.StatusBadRequest,
 				Data:    nil,
-				Message: "success",
+				Message: "file image required",
 			})
 			return
 		}
 		ext := filepath.Ext(file.Filename)
-		fileName := "assets/icons/" + uuid.New().String() + ext
+		fileName := "assets/images/" + uuid.New().String() + ext
 		if errUpload := c.SaveUploadedFile(file, fileName); errUpload != nil {
-			c.JSON(http.StatusInternalServerError, lib.Response{
-				Code:    http.StatusInternalServerError,
-				Data:    nil,
-				Message: "Internal Server Error. Failed while upload icon" + errUpload.Error(),
-			})
+			if _, err := os.Stat("/assets/images"); err != nil {
+				lib.AbortInternalServerError(c, err)
+				return
+			}
+			lib.AbortInternalServerError(c, errUpload)
+			return
+		}
+		event := repository.Event{
+			Event: model.Event{
+				Name:        strings.Title(name),
+				Description: description,
+				Slug:        lib.MakeSlug(name),
+				Image:       fileName,
+				StartAt:     datatypes.Date(startValue),
+				FinishAt:    datatypes.Date(finishValue),
+				Location:    location,
+				CreatedAt:   time.Time{},
+				UpdatedAt:   time.Time{},
+			},
+		}
+		data, err := event.Create()
+		if err != nil {
+			lib.AbortInternalServerError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, lib.Response{
-			Code: http.StatusOK,
-			Data: map[string]interface{}{
-				"file": file,
-				"name": file.Filename,
-				"ext":  ext,
-			},
+			Code:    http.StatusOK,
+			Data:    data,
 			Message: "success",
 		})
 		return
@@ -60,42 +84,5 @@ func IndexEvent(c *gin.Context) {
 		Code:    http.StatusOK,
 		Data:    data,
 		Message: "success",
-	})
-}
-
-func CreateEvent(c *gin.Context) {
-	name := c.PostForm("name")
-	description := c.PostForm("description")
-	start := c.PostForm("start")
-	finish := c.PostForm("finish")
-
-	startValue, _ := time.Parse("2006-01-02", start)
-	finishValue, _ := time.Parse("2006-01-02", finish)
-	event := repository.Event{
-		Event: model.Event{
-			Name:        strings.Title(name),
-			Description: description,
-			Slug:        lib.MakeSlug(name),
-			Image:       "",
-			StartAt:     datatypes.Date(startValue),
-			FinishAt:    datatypes.Date(finishValue),
-			Location:    "",
-			CreatedAt:   time.Time{},
-			UpdatedAt:   time.Time{},
-		},
-	}
-	data, err := event.Create()
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, lib.Response{
-			Code:    http.StatusInternalServerError,
-			Data:    nil,
-			Message: "Failed To insert Data " + err.Error(),
-		})
-		return
-	}
-	c.JSON(http.StatusOK, lib.Response{
-		Code:    http.StatusOK,
-		Data:    data,
-		Message: "success insert data",
 	})
 }

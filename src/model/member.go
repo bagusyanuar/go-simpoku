@@ -27,4 +27,3 @@ func (member *Member) BeforeCreate(tx *gorm.DB) (err error) {
 func (Member) TableName() string {
 	return "members"
 }
-

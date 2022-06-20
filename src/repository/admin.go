@@ -9,7 +9,7 @@ import (
 
 type AdminAuth struct {
 	model.User
-	Admin model.Admin `gorm:"foreignKey:UserID" json:"user"`
+	Admin model.Admin `gorm:"foreignKey:UserID" json:"admin"`
 }
 
 func (auth *AdminAuth) SignIn() (admin *AdminAuth, err error) {

@@ -26,6 +26,7 @@ type Specialist struct {
 	Member []model.Member `gorm:"many2many:member_specialist;"`
 }
 
+//tabel event
 type Event struct {
 	model.Event
 }

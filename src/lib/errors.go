@@ -15,6 +15,7 @@ var (
 	ErrJWTParse        = errors.New("invalid parse jwt")
 	ErrNoAuthorization = errors.New("unauthorized")
 	ErrInvalidPassword = errors.New("password did not match")
+	ErrInvalidRole = errors.New("role did not match")
 )
 
 func Unauthorized(c *gin.Context) {
@@ -39,6 +40,12 @@ func ErrorSignIn(err error) Response {
 			Data:    nil,
 			Message: "password did not match",
 		}
+	} else if errors.Is(err, ErrInvalidRole) {
+		return Response{
+			Code:    http.StatusUnauthorized,
+			Data:    nil,
+			Message: "role did not match",
+		}
 	} else {
 		return Response{
 			Code:    http.StatusInternalServerError,
@@ -53,5 +60,12 @@ func AbortInternalServerError(c *gin.Context, err error) {
 		Code:    http.StatusInternalServerError,
 		Data:    nil,
 		Message: "internal server error : " + err.Error(),
+	})
+}
+func BadRequestError(c *gin.Context, err error) {
+	c.AbortWithStatusJSON(http.StatusBadRequest, Response{
+		Code:    http.StatusBadRequest,
+		Data:    nil,
+		Message: "bad request : " + err.Error(),
 	})
 }

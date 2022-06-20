@@ -19,7 +19,7 @@ type memberUser struct {
 	User model.User
 }
 
-func SignUp(c *gin.Context) {
+func (Auth) MemberSignUp(c *gin.Context) {
 	email := c.PostForm("email")
 	username := c.PostForm("username")
 	password := c.PostForm("password")
@@ -28,11 +28,7 @@ func SignUp(c *gin.Context) {
 	roles, _ := json.Marshal([]string{"member"})
 	hash, errHashing := bcrypt.GenerateFromPassword([]byte(password), 13)
 	if errHashing != nil {
-		c.JSON(http.StatusInternalServerError, lib.Response{
-			Code:    http.StatusInternalServerError,
-			Data:    nil,
-			Message: "Bad Request! Failed Hashing Password",
-		})
+		lib.BadRequestError(c, errHashing)
 		return
 	}
 	password = string(hash)
@@ -60,11 +56,7 @@ func SignUp(c *gin.Context) {
 
 	if err := tx.Debug().Create(&member).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, lib.Response{
-			Code:    http.StatusInternalServerError,
-			Data:    nil,
-			Message: "Error While Creating Account " + err.Error(),
-		})
+		lib.AbortInternalServerError(c, err)
 		return
 	}
 
@@ -72,8 +64,8 @@ func SignUp(c *gin.Context) {
 	claim := lib.JWTClaims{
 		Unique:     member.UserID,
 		Identifier: member.ID,
-		// Username:   member.User.Username,
-		// Email:      member.User.Email,
+		Username:   member.User.Username,
+		Email:      member.User.Email,
 		Role: "member",
 	}
 	accessToken, errorTokenize := jwt.GenerateToked(claim)
@@ -96,16 +88,55 @@ func SignUp(c *gin.Context) {
 	})
 }
 
-func AdminSignIn(c *gin.Context) {
+func (Auth) SignIn (c *gin.Context)  {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
-	auth := repository.AdminAuth{
+	role := c.PostForm("role")
+	auth := repository.Auth{
 		User: model.User{
 			Username: username,
 			Password: &password,
 		},
 	}
-	user, err := auth.SignIn()
+	user, err := auth.SignIn(role)
+	if err != nil {
+		errorResponse := lib.ErrorSignIn(err)
+		c.AbortWithStatusJSON(errorResponse.Code, errorResponse)
+		return
+	}
+	jwt := lib.JWT{}
+	claim := lib.JWTClaims{
+		Unique:     user.User.ID,
+		Identifier: user.Member.ID,
+		Username:   user.User.Username,
+		Email:      user.User.Email,
+		Role:       "admin",
+	}
+	accessToken, errorTokenize := jwt.GenerateToked(claim)
+	if errorTokenize != nil {
+		lib.AbortInternalServerError(c, errorTokenize)
+		return
+	}
+	c.JSON(http.StatusOK, lib.Response{
+		Code: http.StatusOK,
+		Data: map[string]interface{}{
+			"accessToken": accessToken,
+			"user": user,
+		},
+		Message: "success sign in",
+	})
+}
+
+func (Auth) AdminSignIn(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+	auth := repository.Auth{
+		User: model.User{
+			Username: username,
+			Password: &password,
+		},
+	}
+	user, err := auth.SignIn("admin")
 	if err != nil {
 		errorResponse := lib.ErrorSignIn(err)
 		c.AbortWithStatusJSON(errorResponse.Code, errorResponse)
