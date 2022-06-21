@@ -13,6 +13,11 @@ type Auth struct {
 	Admin  model.Admin  `gorm:"foreignKey:UserID" json:"admin"`
 }
 
+type AuthMember struct {
+	model.User
+	Member model.Member `gorm:"foreignKey:UserID" json:"member"`
+}
+
 func (auth *Auth) SignIn(role string) (user *Auth, err error) {
 	password := *auth.User.Password
 	preload := "Admin"
@@ -38,4 +43,32 @@ func (auth *Auth) SignIn(role string) (user *Auth, err error) {
 		return auth, lib.ErrInvalidPassword
 	}
 	return auth, nil
+}
+
+func (auth *AuthMember) SignUp() (token *string, err error) {
+	tx := database.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err = tx.Debug().Create(&auth).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	jwt := lib.JWT{}
+	claim := lib.JWTClaims{
+		Unique:     auth.ID,
+		Identifier: auth.Member.ID,
+		Username:   auth.Username,
+		Email:      auth.Email,
+		Role:       "member",
+	}
+	accessToken, errorTokenize := jwt.GenerateToked(claim)
+	if errorTokenize != nil {
+		tx.Rollback()
+		return nil, errorTokenize
+	}
+	tx.Commit()
+	return &accessToken, nil
 }

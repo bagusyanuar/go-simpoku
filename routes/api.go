@@ -2,6 +2,7 @@ package routes
 
 import (
 	"go-simpoku/src/controller"
+	"go-simpoku/src/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,36 +20,34 @@ func InitRoutes() *gin.Engine {
 				"code": "OK",
 			})
 		})
-		// api.POST("/user/sign-up", controller.SignUp)
-		// api.GET("/specialist", controller.Specialist)
-		// api.POST("/specialist", controller.Specialist)
-		// api.POST("/user/profile", controller.SetMemberProfile)
-		// api.GET("/user/profile", controller.UserGet)
-		// AuthRoutes(api)
-		// MemberRoutes(api)
-		
-		routeAuth := api.Group("auth")
-		{
-			auth := controller.Auth{}
-			routeAuth.POST("/sign-up", auth.SignIn)
-			routeAuth.POST("/sign-in", auth.SignIn)
-			// adminAuth := routeAuth.Group("admin")
-			// {
-			// 	adminAuth.POST("/sign-in", auth.AdminSignIn)
-			// }
+		AuthController := controller.Auth{}
+		MemberController := controller.Member{}
+		EventController := controller.Event{}
+		SpecialistController := controller.Specialist{}
 
-			// memberAuth := routeAuth.Group("member")
-			// {
-			// 	memberAuth.POST("/sign-up", auth.MemberSignUp)
-			// 	memberAuth.POST("/sign-in", auth.SignIn)
-			// }
+		auth := api.Group("auth")
+		{
+			auth.POST("/sign-up", AuthController.SignUp)
+			auth.POST("/sign-in", AuthController.SignIn)
 		}
 
-		routeEvent := api.Group("event")
+		member := api.Group("member")
 		{
-			event := controller.Event{}
-			routeEvent.GET("/", event.Index)
-			routeEvent.POST("/", event.Index)
+			member.GET("/", middleware.Auth, middleware.Member, MemberController.Index)
+		}
+
+		event := api.Group("event")
+		{
+			event.GET("/", EventController.Index)
+			event.POST("/", EventController.Index)
+			event.GET("/:slug", EventController.FindBySlug)
+		}
+
+		specialist := api.Group("specialist")
+		{
+			specialist.GET("/", SpecialistController.Index)
+			specialist.POST("/", SpecialistController.Index)
+			specialist.GET("/:id", SpecialistController.FindByID)
 		}
 	}
 	return route

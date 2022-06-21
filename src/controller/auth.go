@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"go-simpoku/database"
 	"go-simpoku/src/lib"
 	"go-simpoku/src/model"
 	"go-simpoku/src/repository"
@@ -14,12 +13,7 @@ import (
 
 type Auth struct{}
 
-type memberUser struct {
-	model.Member
-	User model.User
-}
-
-func (Auth) MemberSignUp(c *gin.Context) {
+func (Auth) SignUp(c *gin.Context) {
 	email := c.PostForm("email")
 	username := c.PostForm("username")
 	password := c.PostForm("password")
@@ -33,52 +27,23 @@ func (Auth) MemberSignUp(c *gin.Context) {
 	}
 	password = string(hash)
 
-	tx := database.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	user := model.User{
-		Username: username,
-		Email:    email,
-		Password: &password,
-		Roles:    roles,
-	}
-
-	member := memberUser{
+	auth := repository.AuthMember{
+		User: model.User{
+			Email: email,
+			Username: username,
+			Password: &password,
+			Roles: roles,
+		},
 		Member: model.Member{
 			Name: name,
 		},
-		User: user,
 	}
 
-	if err := tx.Debug().Create(&member).Error; err != nil {
-		tx.Rollback()
+	accessToken, err := auth.SignUp()
+	if err != nil {
 		lib.AbortInternalServerError(c, err)
 		return
 	}
-
-	jwt := lib.JWT{}
-	claim := lib.JWTClaims{
-		Unique:     member.UserID,
-		Identifier: member.ID,
-		Username:   member.User.Username,
-		Email:      member.User.Email,
-		Role: "member",
-	}
-	accessToken, errorTokenize := jwt.GenerateToked(claim)
-	if errorTokenize != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    http.StatusInternalServerError,
-			"data":    nil,
-			"message": "Error While Generate Token " + errorTokenize.Error(),
-		})
-		return
-	}
-	tx.Commit()
 	c.JSON(http.StatusOK, lib.Response{
 		Code: http.StatusOK,
 		Data: map[string]interface{}{
@@ -88,7 +53,7 @@ func (Auth) MemberSignUp(c *gin.Context) {
 	})
 }
 
-func (Auth) SignIn (c *gin.Context)  {
+func (Auth) SignIn(c *gin.Context)  {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 	role := c.PostForm("role")
@@ -127,44 +92,44 @@ func (Auth) SignIn (c *gin.Context)  {
 	})
 }
 
-func (Auth) AdminSignIn(c *gin.Context) {
-	username := c.PostForm("username")
-	password := c.PostForm("password")
-	auth := repository.Auth{
-		User: model.User{
-			Username: username,
-			Password: &password,
-		},
-	}
-	user, err := auth.SignIn("admin")
-	if err != nil {
-		errorResponse := lib.ErrorSignIn(err)
-		c.AbortWithStatusJSON(errorResponse.Code, errorResponse)
-		return
-	}
-	jwt := lib.JWT{}
-	claim := lib.JWTClaims{
-		Unique:     user.User.ID,
-		Identifier: user.Admin.ID,
-		Username:   user.User.Username,
-		Email:      user.User.Email,
-		Role:       "admin",
-	}
-	accessToken, errorTokenize := jwt.GenerateToked(claim)
-	if errorTokenize != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"code":    http.StatusInternalServerError,
-			"data":    nil,
-			"message": "Error While Generate Token " + errorTokenize.Error(),
-		})
-		return
-	}
-	c.JSON(http.StatusOK, lib.Response{
-		Code: http.StatusOK,
-		Data: map[string]interface{}{
-			"accessToken": accessToken,
-		},
-		Message: "success sign in",
-	})
+// func (Auth) AdminSignIn(c *gin.Context) {
+// 	username := c.PostForm("username")
+// 	password := c.PostForm("password")
+// 	auth := repository.Auth{
+// 		User: model.User{
+// 			Username: username,
+// 			Password: &password,
+// 		},
+// 	}
+// 	user, err := auth.SignIn("admin")
+// 	if err != nil {
+// 		errorResponse := lib.ErrorSignIn(err)
+// 		c.AbortWithStatusJSON(errorResponse.Code, errorResponse)
+// 		return
+// 	}
+// 	jwt := lib.JWT{}
+// 	claim := lib.JWTClaims{
+// 		Unique:     user.User.ID,
+// 		Identifier: user.Admin.ID,
+// 		Username:   user.User.Username,
+// 		Email:      user.User.Email,
+// 		Role:       "admin",
+// 	}
+// 	accessToken, errorTokenize := jwt.GenerateToked(claim)
+// 	if errorTokenize != nil {
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+// 			"code":    http.StatusInternalServerError,
+// 			"data":    nil,
+// 			"message": "Error While Generate Token " + errorTokenize.Error(),
+// 		})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, lib.Response{
+// 		Code: http.StatusOK,
+// 		Data: map[string]interface{}{
+// 			"accessToken": accessToken,
+// 		},
+// 		Message: "success sign in",
+// 	})
 
-}
+// }

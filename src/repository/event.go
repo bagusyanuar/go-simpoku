@@ -23,3 +23,10 @@ func (Event) FindAll() (d []Event, err error) {
 	}
 	return data, nil
 }
+
+func (event Event) FindBySlug() (d *Event, err error)  {
+	if err = database.DB.Debug().Where("slug = ?", event.Slug).First(&event).Error; err != nil {
+		return nil, err
+	}
+	return &event, nil
+}

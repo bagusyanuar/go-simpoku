@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"go-simpoku/src/lib"
 	"go-simpoku/src/model"
 	"go-simpoku/src/repository"
@@ -8,36 +9,41 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func Specialist(c *gin.Context) {
-	specialist := repository.Specialist{}
+type Specialist struct{
+	model.Specialist
+}
 
+func (Specialist) Index(c *gin.Context) {
 	if c.Request.Method == "POST" {
 		name := c.PostForm("name")
-
-		formData := model.Specialist{
-			Name: strings.Title(name),
-			Slug: lib.MakeSlug(name),
+		specialist := repository.Specialist{
+			Specialist: model.Specialist{
+				Name: strings.Title(name),
+				Slug: lib.MakeSlug(name),
+			},
 		}
-
-		data, err := specialist.Create(&formData)
+		data, err := specialist.Create()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, lib.Response{
 				Code:    http.StatusInternalServerError,
 				Data:    nil,
-				Message: "Failed To insert Data " + err.Error(),
+				Message: "failed to insert data : " + err.Error(),
 			})
 			return
 		}
 		c.JSON(http.StatusOK, lib.Response{
 			Code:    http.StatusOK,
 			Data:    data,
-			Message: "success insert data",
+			Message: "success",
 		})
 		return
 	}
-	result, err := specialist.FindAll()
+	specialist := repository.Specialist{}
+	q := c.Query("q")
+	result, err := specialist.FindAll(q)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, lib.Response{
 			Code:    http.StatusInternalServerError,
@@ -49,6 +55,25 @@ func Specialist(c *gin.Context) {
 	c.JSON(http.StatusOK, lib.Response{
 		Code:    http.StatusOK,
 		Data:    result,
-		Message: "success fetch data",
+		Message: "success",
+	})
+}
+
+func (Specialist) FindByID(c *gin.Context)  {
+	id := c.Param("id")
+	specialist := repository.Specialist{}
+	data, err := specialist.Find(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			lib.RecordNotFound(c)
+			return
+		}
+		lib.AbortInternalServerError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, lib.Response{
+		Code:    http.StatusOK,
+		Data:    data,
+		Message: "success",
 	})
 }

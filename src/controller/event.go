@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"go-simpoku/src/lib"
 	"go-simpoku/src/model"
 	"go-simpoku/src/repository"
@@ -13,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type Event struct{}
@@ -77,6 +79,29 @@ func (Event) Index(c *gin.Context) {
 	event := repository.Event{}
 	data, err := event.FindAll()
 	if err != nil {
+		lib.AbortInternalServerError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, lib.Response{
+		Code:    http.StatusOK,
+		Data:    data,
+		Message: "success",
+	})
+}
+
+func (Event) FindBySlug(c *gin.Context){
+	slug := c.Param("slug")
+	event := repository.Event{
+		Event: model.Event{
+			Slug: slug,
+		},
+	}
+	data, err := event.FindBySlug()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			lib.RecordNotFound(c)
+			return
+		}
 		lib.AbortInternalServerError(c, err)
 		return
 	}
