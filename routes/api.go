@@ -31,6 +31,16 @@ func InitRoutes() *gin.Engine {
 			auth.POST("/sign-in", AuthController.SignIn)
 		}
 
+		admin := api.Group("admin", middleware.Auth, middleware.Admin)
+		{
+			specialist := admin.Group("specialist")
+			{
+				specialist.GET("/", SpecialistController.Index)
+				specialist.POST("/", SpecialistController.Index)
+				specialist.GET("/:id", SpecialistController.FindByID)
+			}
+		}
+
 		member := api.Group("member")
 		{
 			member.GET("/", middleware.Auth, middleware.Member, MemberController.Index)
@@ -43,12 +53,6 @@ func InitRoutes() *gin.Engine {
 			event.GET("/:slug", EventController.FindBySlug)
 		}
 
-		specialist := api.Group("specialist")
-		{
-			specialist.GET("/", SpecialistController.Index)
-			specialist.POST("/", SpecialistController.Index)
-			specialist.GET("/:id", SpecialistController.FindByID)
-		}
 	}
 	return route
 }
